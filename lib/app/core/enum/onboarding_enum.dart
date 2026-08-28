@@ -1,0 +1,4 @@
+enum OnboardingOrigin {
+  newUser,
+  home;
+}
