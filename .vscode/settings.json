@@ -1,0 +1,10 @@
+{
+  "flutterTools.displayGetxContextMenu": true,
+  "flutterTools.displayMobxContextMenu": false,
+  "flutterTools.displayRiverpodContextMenu": false,
+  "flutterTools.displayModularContextMenu": false,
+  //"dart.flutterSdkPath": ".fvm/versions/3.27.3"
+  "dart.flutterSdkPath": ".fvm/versions/3.27.2",
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "cmake.sourceDirectory": "C:/Users/user/Documents/Flutter/idee_pet/linux"
+}
