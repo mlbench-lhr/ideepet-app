@@ -1,0 +1,74 @@
+buildscript {
+
+    ext.kotlin_version = '2.0.21' // Verifique a versão recomendada/usada pelo Flutter
+    ext.google_services_version = '4.4.2' 
+
+    repositories {
+      // Make sure that you have the following two repositories
+      google()  // Google's Maven repository
+      mavenCentral()  // Maven Central repository
+    }
+
+    dependencies {
+        // Adicione esta linha para o plugin do Google Services
+        classpath "com.google.gms:google-services:$google_services_version" // <<< USA A VERSÃO DEFINIDA ACIMA
+
+        // Adicione esta linha se seu projeto usa Kotlin (a maioria dos projetos Flutter usa)
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version" // <<< USA A VERSÃO DEFINIDA ACIMA
+
+        // Nota: Outras dependências de classpath podem ser necessárias dependendo dos plugins
+    }
+   
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    
+}
+
+
+
+rootProject.buildDir = "../build"
+
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                compileSdkVersion 35
+                buildToolsVersion "35.0.0"
+                if (namespace == null) {
+                    namespace = project.group.toString()  // Set namespace as fallback
+                }
+                project.tasks.whenTaskAdded { task ->
+                    if (task.name.contains('processDebugManifest') || task.name.contains('processReleaseManifest')) {
+                        task.doFirst {
+                            File manifestFile = file("${projectDir}/src/main/AndroidManifest.xml")
+                            if (manifestFile.exists()) {
+                                String manifestContent = manifestFile.text
+                                if (manifestContent.contains('package=')) {
+                                    manifestContent = manifestContent.replaceAll(/package="[^"]*"/, "")
+                                    manifestFile.write(manifestContent)
+                                    println "Removed 'package' attribute from ${manifestFile}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
