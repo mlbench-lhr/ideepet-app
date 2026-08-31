@@ -62,6 +62,13 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   build_runner: ^2.4.14
 
+dependency_overrides:
+  # easy_image_cropper 1.0.3 (pub.dev) ships Android code that references the
+  # removed Flutter v1 embedding (PluginRegistry.Registrar), so it fails to
+  # compile on modern Flutter. Patched local copy at packages/easy_image_cropper.
+  easy_image_cropper:
+    path: packages/easy_image_cropper
+
 flutter:
   uses-material-design: true
   config:
