@@ -4,7 +4,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:idee_pet/app/app.dart';
 import 'package:idee_pet/app/core/analytics/log_screen.dart';
-import 'package:idee_pet/app/routes/biometric_routes.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
@@ -35,9 +34,9 @@ void main() async {
     GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'iDeePet',
-      initialRoute: BiometricRoutes
-          .guide, // TODO: revert to SplashRoutes.splash after testing
-      // initialRoute: SplashRoutes.splash,
+      // initialRoute: BiometricRoutes
+      //     .guide, // TODO: revert to SplashRoutes.splash after testing
+      initialRoute: SplashRoutes.splash,
       getPages: AppPages.routes,
       locale: Locale('pt', 'BR'),
       localizationsDelegates: [

@@ -6,7 +6,7 @@ class CreateUserResponse {
 
   factory CreateUserResponse.fromJson(Map<String, dynamic> json) {
     return CreateUserResponse(
-      code: json['code'],
+      code: json['code'] as String? ?? '',
     );
   }
 }
