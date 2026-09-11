@@ -132,6 +132,6 @@ class HealthConditionController extends GetxController {
       showSuccess(message: 'Atualizado com sucesso!');
       return;
     }
-    showError(message: response.errorMessages.first ?? 'Erro ao atualizar!');
+    showError(message: response.errorMessages?.firstOrNull ?? 'Erro ao atualizar!');
   }
 }

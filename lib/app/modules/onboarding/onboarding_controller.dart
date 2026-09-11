@@ -414,7 +414,7 @@ class OnboardingController extends GetxController {
     //   _navigationService.offAllNamed(LoginRoutes.login);
     // }
     loadingCreate(false);
-    showError(message: response.errorMessages?.first);
+    showError(message: response.errorMessages?.firstOrNull ?? 'Algo deu errado');
   }
 
   PageController pageController = PageController(initialPage: 0);

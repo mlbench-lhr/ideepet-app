@@ -133,7 +133,7 @@ class OtpController extends GetxController {
       showSuccess(message: 'Código enviado com sucesso');
       return;
     }
-    showError(message: response.errorMessages?.first);
+    showError(message: response.errorMessages?.firstOrNull ?? 'Algo deu errado');
   }
 
   String get pinCombination =>
