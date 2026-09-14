@@ -23,6 +23,13 @@ class BiometricController extends GetxController {
     _requestCamera();
     if (Get.arguments != null && Get.arguments is Pet) {
       pet = Get.arguments as Pet;
+    } else {
+      debugPrint(
+          '⚠️ BiometricController opened without a Pet argument (Get.arguments: ${Get.arguments}). '
+          'Navigation must pass arguments: pet.');
+      showError(message: 'Não foi possível identificar o pet selecionado.');
+      Get.back();
+      return;
     }
   }
 
