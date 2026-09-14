@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,6 +8,7 @@ import 'package:idee_pet/app/core/core_old/widgets/oval_outline.dart';
 import 'package:idee_pet/app/core/core_old/widgets/svgs.dart';
 import 'package:idee_pet/app/core/helpers/messages.dart';
 import 'package:idee_pet/app/modules/biometric/biometric_controller.dart';
+import 'package:video_player/video_player.dart';
 
 class BiometicScanning extends StatefulWidget {
   const BiometicScanning({super.key});
@@ -19,7 +22,6 @@ class _BiometicScanningState extends State<BiometicScanning>
   final BiometricController controller = Get.find<BiometricController>();
 
   CameraController? _cameraController;
-  bool _isCapturing = false;
 
   @override
   void initState() {
@@ -54,33 +56,103 @@ class _BiometicScanningState extends State<BiometicScanning>
     setState(() => _cameraController = cameraController);
   }
 
-  Future<void> _captureImages() async {
-    final cameraController = _cameraController;
-    if (cameraController == null ||
-        !cameraController.value.isInitialized ||
-        _isCapturing) {
+  bool _isRecording = false;
+  File? _recordedVideo;
+  VideoPlayerController? _videoController;
+
+  Future<void> _beginVideoRecording() async {
+    final cam = _cameraController;
+    if (cam == null || !cam.value.isInitialized || cam.value.isRecordingVideo) {
       return;
     }
 
-    setState(() => _isCapturing = true);
+    try {
+      await cam.startVideoRecording();
+      if (mounted) setState(() => _isRecording = true);
+    } catch (e) {
+      debugPrint('Error starting video recording: $e');
+    }
+  }
 
-    for (int i = 0; i < 3; i++) {
-      try {
-        final file = await cameraController.takePicture();
-        controller.captureAndStoreImage(file);
-      } catch (e) {
-        debugPrint('Error taking picture: $e');
+  Future<void> _cancelVideoRecording() async {
+    final cam = _cameraController;
+    if (cam == null || !cam.value.isRecordingVideo) return;
+
+    try {
+      final file = await cam.stopVideoRecording();
+      await File(file.path).delete();
+    } catch (e) {
+      debugPrint('Error cancelling video recording: $e');
+    } finally {
+      if (mounted) setState(() => _isRecording = false);
+    }
+  }
+
+  Future<void> _finishVideoRecording() async {
+    final cam = _cameraController;
+    if (cam == null || !cam.value.isRecordingVideo) return;
+
+    try {
+      final file = await cam.stopVideoRecording();
+      final videoFile = File(file.path);
+      final videoController = VideoPlayerController.file(videoFile);
+      await videoController.initialize();
+      await videoController.setLooping(true);
+      await videoController.play();
+
+      if (!mounted) {
+        await videoController.dispose();
+        return;
       }
-      if (i < 2) {
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
+
+      setState(() {
+        _isRecording = false;
+        _recordedVideo = videoFile;
+        _videoController = videoController;
+      });
+    } catch (e) {
+      debugPrint('Error finishing video recording: $e');
+      if (mounted) setState(() => _isRecording = false);
+    }
+  }
+
+  Future<void> _onTickPressed() async {
+    final video = _recordedVideo;
+    if (video == null) return;
+
+    final success = await controller.sendBiometryVideo(video);
+
+    if (!mounted) return;
+
+    if (success) {
+      controller.goToSuccessScreen();
+    } else {
+      await _retryRecording();
+    }
+  }
+
+  Future<void> _retryRecording() async {
+    final oldVideoController = _videoController;
+    final oldRecordedVideo = _recordedVideo;
+
+    setState(() {
+      _videoController = null;
+      _recordedVideo = null;
+    });
+
+    await oldVideoController?.dispose();
+    if (oldRecordedVideo != null && await oldRecordedVideo.exists()) {
+      await oldRecordedVideo.delete();
     }
 
-    if (mounted) setState(() => _isCapturing = false);
+    final cam = _cameraController;
+    if (cam == null || !cam.value.isInitialized) {
+      await _initializeCamera();
+    }
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
     final cameraController = _cameraController;
     if (cameraController == null || !cameraController.value.isInitialized) {
       return;
@@ -88,10 +160,18 @@ class _BiometicScanningState extends State<BiometicScanning>
 
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
-      cameraController.dispose();
+      if (cameraController.value.isRecordingVideo) {
+        await _cancelVideoRecording();
+      }
+      await cameraController.dispose();
       _cameraController = null;
+      await _videoController?.pause();
     } else if (state == AppLifecycleState.resumed) {
-      _initializeCamera();
+      if (_recordedVideo == null) {
+        _initializeCamera();
+      } else {
+        _videoController?.play();
+      }
     }
   }
 
@@ -99,6 +179,7 @@ class _BiometicScanningState extends State<BiometicScanning>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _cameraController?.dispose();
+    _videoController?.dispose();
     super.dispose();
   }
 
@@ -120,7 +201,9 @@ class _BiometicScanningState extends State<BiometicScanning>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          _CameraPreviewBackground(cameraController: _cameraController),
+          _videoController != null && _videoController!.value.isInitialized
+              ? _RecordedVideoPreview(controller: _videoController!)
+              : _CameraPreviewBackground(cameraController: _cameraController),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -155,9 +238,36 @@ class _BiometicScanningState extends State<BiometicScanning>
           Positioned.fill(
             child: _HoldToScanControls(
               recordDuration: const Duration(seconds: 5),
-              isCapturing: _isCapturing,
-              onHoldComplete: _captureImages,
+              isCapturing: _isRecording,
+              hasRecordedVideo: _recordedVideo != null,
+              onHoldStart: _beginVideoRecording,
+              onHoldCancel: _cancelVideoRecording,
+              onHoldComplete: _finishVideoRecording,
+              onTickTap: _onTickPressed,
+              onRetry: _retryRecording,
             ),
+          ),
+          Obx(
+            () => controller.isUploadingBiometry.isTrue
+                ? Container(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(color: Colors.white),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Enviando vídeo...',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -190,16 +300,46 @@ class _CameraPreviewBackground extends StatelessWidget {
   }
 }
 
+class _RecordedVideoPreview extends StatelessWidget {
+  const _RecordedVideoPreview({required this.controller});
+
+  final VideoPlayerController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.expand(
+      child: FittedBox(
+        fit: BoxFit.cover,
+        child: SizedBox(
+          width: controller.value.size.width,
+          height: controller.value.size.height,
+          child: VideoPlayer(controller),
+        ),
+      ),
+    );
+  }
+}
+
 class _HoldToScanControls extends StatefulWidget {
   const _HoldToScanControls({
     required this.recordDuration,
+    required this.onHoldStart,
+    required this.onHoldCancel,
     required this.onHoldComplete,
     this.isCapturing = false,
+    this.hasRecordedVideo = false,
+    this.onTickTap,
+    this.onRetry,
   });
 
   final Duration recordDuration;
+  final VoidCallback onHoldStart;
+  final VoidCallback onHoldCancel;
   final VoidCallback onHoldComplete;
   final bool isCapturing;
+  final bool hasRecordedVideo;
+  final VoidCallback? onTickTap;
+  final VoidCallback? onRetry;
 
   @override
   State<_HoldToScanControls> createState() => _HoldToScanControlsState();
@@ -218,19 +358,27 @@ class _HoldToScanControlsState extends State<_HoldToScanControls>
       duration: widget.recordDuration,
     )..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          _stopRecording();
+          _resetRingState();
           widget.onHoldComplete();
         }
       });
   }
 
   void _startRecording() {
-    if (_isRecording || widget.isCapturing) return;
+    if (_isRecording || widget.isCapturing || widget.hasRecordedVideo) return;
     setState(() => _isRecording = true);
     _controller.forward(from: 0);
+    widget.onHoldStart();
   }
 
+  /// Stops the ring for an early release (before the full duration elapsed).
   void _stopRecording() {
+    if (!_isRecording) return;
+    _resetRingState();
+    widget.onHoldCancel();
+  }
+
+  void _resetRingState() {
     if (!_isRecording) return;
     setState(() => _isRecording = false);
     _controller.stop();
@@ -308,6 +456,7 @@ class _HoldToScanControlsState extends State<_HoldToScanControls>
                 onTapDown: (_) => _startRecording(),
                 onTapUp: (_) => _stopRecording(),
                 onTapCancel: _stopRecording,
+                onTap: widget.hasRecordedVideo ? widget.onTickTap : null,
                 child: SizedBox(
                   height: 96,
                   width: 96,
@@ -338,7 +487,13 @@ class _HoldToScanControlsState extends State<_HoldToScanControls>
                         child: Container(
                           color: Colors.white,
                           child: Center(
-                            child: CustomLogo.logoIcon(height: 30, width: 30),
+                            child: widget.hasRecordedVideo
+                                ? const Icon(
+                                    Icons.check_rounded,
+                                    color: Colors.green,
+                                    size: 34,
+                                  )
+                                : CustomLogo.logoIcon(height: 30, width: 30),
                           ),
                         ),
                       ),
@@ -348,6 +503,22 @@ class _HoldToScanControlsState extends State<_HoldToScanControls>
               ),
             ),
           ),
+          widget.hasRecordedVideo
+              ? Positioned(
+                  bottom: 100,
+                  left: 160,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: widget.onRetry,
+                    child: Container(
+                        padding: EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.background,
+                        ),
+                        child: Icon(Icons.refresh)),
+                  ))
+              : SizedBox.shrink(),
         ],
       ),
     );

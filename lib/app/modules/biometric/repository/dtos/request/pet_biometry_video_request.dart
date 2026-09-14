@@ -3,21 +3,18 @@ import 'dart:io';
 import 'package:get/get_connect/http/src/multipart/form_data.dart';
 import 'package:get/get_connect/http/src/multipart/multipart_file.dart';
 
-class PetBiometryRequest {
+class PetBiometryVideoRequest {
   final String id;
-  final List<File> images;
+  final File video;
 
-  PetBiometryRequest({
+  PetBiometryVideoRequest({
     required this.id,
-    required this.images,
+    required this.video,
   });
 
   FormData toFormData() {
     return FormData({
-      "files": images
-          .map((file) =>
-              MultipartFile(file, filename: file.path.split('/').last))
-          .toList(),
+      'video': MultipartFile(video, filename: video.path.split('/').last),
     });
   }
 }

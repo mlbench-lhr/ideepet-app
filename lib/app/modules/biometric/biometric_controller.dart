@@ -45,6 +45,36 @@ class BiometricController extends GetxController {
   var progressBiometric = 0.0.obs;
   final textSelectCamera = <String>[].obs;
   var detectedLabel = ''.obs;
+  final isUploadingBiometry = false.obs;
+  final uploadProgress = 0.0.obs;
+
+  Future<bool> sendBiometryVideo(File video) async {
+    isUploadingBiometry(true);
+    uploadProgress(0.0);
+
+    final response = await _biometricsRepository.sendBiometryVideo(
+      PetBiometryVideoRequest(id: pet.id, video: video),
+      onProgress: (progress) => uploadProgress(progress),
+    );
+
+    isUploadingBiometry(false);
+
+    if (response.success) {
+      return true;
+    }
+
+    showError(
+      message: response.errorMessages.isNotEmpty
+          ? response.errorMessages.first
+          : 'Não foi possível processar o vídeo.',
+    );
+    return false;
+  }
+
+  void goToSuccessScreen() {
+    showSuccess(message: 'Biometria registrada com sucesso!');
+    _navigationService.offAllNamed(HomeRoutes.home, arguments: true);
+  }
 
   Future<void> captureAndStoreImage(XFile file) async {
     setProgressBiometric();

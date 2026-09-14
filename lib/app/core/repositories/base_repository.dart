@@ -22,8 +22,7 @@ class BaseRepository extends GetConnect {
 
     httpClient
       //..baseUrl = 'https://petserviceapiprodv2-721852722464.us-central1.run.app'
-      // ..baseUrl = 'https://api.ideepet.com.br'
-      ..baseUrl = 'http://192.168.0.188:3000'
+      ..baseUrl = 'https://api.ideepet.com.br'
       ..timeout = timeOut
       ..maxAuthRetries = 4
       ..userAgent = ''

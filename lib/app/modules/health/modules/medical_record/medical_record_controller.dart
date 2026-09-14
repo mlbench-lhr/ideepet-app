@@ -30,11 +30,7 @@ class MedicalRecordController extends GetxController {
       list(response.result);
       return;
     }
-    showError(
-      message: response.errorMessages.isNotEmpty
-          ? response.errorMessages.first.toString()
-          : 'Algo deu errado',
-    );
+    showError(message: response.errorMessages?.first ?? 'Algo deu errado');
   }
 
   Future<void> createMedicalRecord(CreateMedicalRecordRequest request) async {
@@ -49,11 +45,7 @@ class MedicalRecordController extends GetxController {
       return;
     }
     isLoading(false);
-    showError(
-      message: response.errorMessages.isNotEmpty
-          ? response.errorMessages.first.toString()
-          : 'Algo deu errado',
-    );
+    showError(message: response.errorMessages?.first ?? 'Algo deu errado');
   }
 
   Future<void> deleteMedicalRecord(String id) async {
@@ -62,10 +54,6 @@ class MedicalRecordController extends GetxController {
       list.removeWhere((element) => element.id == id);
       return;
     }
-    showError(
-      message: response.errorMessages.isNotEmpty
-          ? response.errorMessages.first.toString()
-          : 'Algo deu errado',
-    );
+    showError(message: response.errorMessages?.first ?? 'Algo deu errado');
   }
 }

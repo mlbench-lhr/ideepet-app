@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:idee_pet/app/core/core_old/colors.dart';
-import 'package:idee_pet/app/core/core_old/widgets/buttons.dart';
+import 'package:idee_pet/app/app.dart';
 import 'package:idee_pet/app/routes/biometric_routes.dart';
 
 class BiometricGuide extends StatefulWidget {
@@ -12,6 +11,8 @@ class BiometricGuide extends StatefulWidget {
 }
 
 class _BiometricGuideState extends State<BiometricGuide> {
+  late final Pet? pet = Get.arguments is Pet ? Get.arguments as Pet : null;
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context).height;
@@ -70,7 +71,8 @@ class _BiometricGuideState extends State<BiometricGuide> {
                 'Entendi, começar',
                 style: TextStyle(color: AppColors.background, fontSize: 20),
               ),
-              action: () => Get.toNamed(BiometricRoutes.scanning),
+              action: () =>
+                  Get.toNamed(BiometricRoutes.scanning, arguments: pet),
             ),
             SizedBox(
               height: 20,

@@ -73,9 +73,8 @@ class BaseResponse<T> {
     }
 
     // --- Processamento do Resultado ---
-    final bool shouldParseResult = (response.statusCode ?? 500) < 400;
     T? processedResult;
-    if (shouldParseResult && responseData != null && fromMap != null) {
+    if (responseData != null && fromMap != null) {
       try {
         processedResult = fromMap(responseData);
       } catch (e, s) {
@@ -185,9 +184,8 @@ class BaseResponse<T> {
     }
 
     // --- Processamento da Lista ---
-    final bool shouldParseResult = (response.statusCode ?? 500) < 400;
     List<T> processedList = [];
-    if (shouldParseResult && responseData != null && responseData is List && fromMap != null) {
+    if (responseData != null && responseData is List && fromMap != null) {
       final List<dynamic> dataList = responseData;
       for (int i = 0; i < dataList.length; i++) {
         final item = dataList[i];
