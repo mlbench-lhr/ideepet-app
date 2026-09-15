@@ -224,7 +224,7 @@ class _BiometicScanningState extends State<BiometicScanning>
                     child: Text(
                       textAlign: TextAlign.start,
                       maxLines: 2,
-                      "Posicione o focinho dentro da área indicada e \nsegure firme por 5 segundos.",
+                      "Posicione o focinho dentro da área indicada e \ntoque para gravar por até 5 segundos.",
                       style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 9,
@@ -358,8 +358,7 @@ class _HoldToScanControlsState extends State<_HoldToScanControls>
       duration: widget.recordDuration,
     )..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          _resetRingState();
-          widget.onHoldComplete();
+          _finishRecording();
         }
       });
   }
@@ -371,11 +370,12 @@ class _HoldToScanControlsState extends State<_HoldToScanControls>
     widget.onHoldStart();
   }
 
-  /// Stops the ring for an early release (before the full duration elapsed).
-  void _stopRecording() {
+  /// Stops recording and keeps the video — triggered either by a second tap
+  /// (manual stop) or by the ring animation completing (5s auto-stop).
+  void _finishRecording() {
     if (!_isRecording) return;
     _resetRingState();
-    widget.onHoldCancel();
+    widget.onHoldComplete();
   }
 
   void _resetRingState() {
@@ -383,6 +383,18 @@ class _HoldToScanControlsState extends State<_HoldToScanControls>
     setState(() => _isRecording = false);
     _controller.stop();
     _controller.reset();
+  }
+
+  void _handleTap() {
+    if (widget.hasRecordedVideo) {
+      widget.onTickTap?.call();
+      return;
+    }
+    if (_isRecording) {
+      _finishRecording();
+    } else {
+      _startRecording();
+    }
   }
 
   @override
@@ -453,10 +465,7 @@ class _HoldToScanControlsState extends State<_HoldToScanControls>
             right: 0,
             child: Center(
               child: GestureDetector(
-                onTapDown: (_) => _startRecording(),
-                onTapUp: (_) => _stopRecording(),
-                onTapCancel: _stopRecording,
-                onTap: widget.hasRecordedVideo ? widget.onTickTap : null,
+                onTap: _handleTap,
                 child: SizedBox(
                   height: 96,
                   width: 96,

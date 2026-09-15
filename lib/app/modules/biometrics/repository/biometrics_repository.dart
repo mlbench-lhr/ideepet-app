@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get_connect/http/src/multipart/form_data.dart';
 import 'package:idee_pet/app/app.dart';
 import 'package:idee_pet/app/modules/biometrics/repository/dtos/response/pet_biometry_video_response.dart';
@@ -42,6 +43,10 @@ class BiometricsRepository extends BaseRepository {
       formData,
       uploadProgress: onProgress,
     );
+
+    debugPrint(
+        '@@@ sendBiometryVideo response statusCode: ${response.statusCode}');
+    debugPrint('@@@ sendBiometryVideo response body: ${response.body}');
 
     final isSuccess = (response.statusCode ?? 500) < 400;
     final body = response.body;
