@@ -71,6 +71,6 @@ class BottomMenuController extends GetxController {
   }
 
   void goToFindPet() {
-    navigationService.toNamed(FindPetRoutes.findPet);
+    navigationService.toNamed(FindPetRoutes.guide);
   }
 }

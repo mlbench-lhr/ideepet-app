@@ -10,5 +10,5 @@ class InitialController extends GetxController {
   void goToOnboarding() =>
       _navigationService.toNamed(OnboardingRoutes.onboarding);
 
-  void goToFindPet() => _navigationService.toNamed(FindPetRoutes.findPet);
+  void goToFindPet() => _navigationService.toNamed(FindPetRoutes.guide);
 }
