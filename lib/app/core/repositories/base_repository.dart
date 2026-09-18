@@ -65,6 +65,7 @@ class BaseRepository extends GetConnect {
         decoder: decoder,
       ),
       url,
+      'GET',
     );
   }
 
@@ -91,6 +92,7 @@ class BaseRepository extends GetConnect {
         uploadProgress: uploadProgress,
       ),
       url,
+      'POST',
     );
   }
 
@@ -117,6 +119,7 @@ class BaseRepository extends GetConnect {
         uploadProgress: uploadProgress,
       ),
       url,
+      'PUT',
     );
   }
 
@@ -139,16 +142,21 @@ class BaseRepository extends GetConnect {
         decoder: decoder,
       ),
       url,
+      'DELETE',
     );
   }
 
   Future<Response<T>> _runRequest<T>(
     Future<Response<T>> Function() request,
     String? url,
+    String method,
   ) async {
     try {
       // 1. Executa a requisição passada (super.get, super.post, etc.)
-      return await request();
+      final response = await request();
+      debugPrint('@@@ API $method $url -> status: ${response.statusCode}');
+      debugPrint('@@@ API $method $url -> body: ${response.body}');
+      return response;
     } on SocketException catch (e, s) {
       // 2. CAPTURA: Erro de rede
       BugTracking().send(

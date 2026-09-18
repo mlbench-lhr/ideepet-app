@@ -84,6 +84,23 @@ class _BiometricGuideState extends State<BiometricGuide> {
               ),
               action: () {},
             ),
+            SizedBox(
+              height: 12,
+            ),
+            Center(
+              child: TextButton(
+                onPressed: () =>
+                    Get.offAllNamed(HomeRoutes.home, arguments: true),
+                child: Text(
+                  'Pular, registrar depois',
+                  style: TextStyle(
+                    color: AppColors.grey,
+                    fontSize: 16,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

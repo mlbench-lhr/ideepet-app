@@ -100,6 +100,7 @@ class HomePage extends BasePage<HomeController> {
                   pets: controller.appStateService.pets,
                   addNewPet: controller.goToOnboardingCreatePet,
                   editPet: controller.goToEditDetails,
+                  goToBiometricScanning: controller.goToBiometricScanning,
                 ),
                 const SizedBox(height: 10),
                 CardHealthWidget(

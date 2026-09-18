@@ -26,6 +26,8 @@ class Pet {
   String healthDate;
   String healthSeverity;
   final PetSex petSex;
+  final bool isVerified;
+  final DateTime? verifiedAt;
   Pet({
     this.id = '',
     this.name = 'Nome Padrão',
@@ -52,6 +54,8 @@ class Pet {
     this.healthSeverity = '',
     this.petSex = PetSex.macho,
     this.birthDate,
+    this.isVerified = false,
+    this.verifiedAt,
   });
 
   factory Pet.fromJson(Map<String, dynamic> json) {
@@ -98,6 +102,10 @@ class Pet {
       petSex: json['sex'] != null ? PetSex.fromJson(json['sex']) : PetSex.macho,
       birthDate: json['birth_date'] != null
           ? DateTime.parse(json['birth_date'])
+          : null,
+      isVerified: json['is_verified'] ?? false,
+      verifiedAt: json['verified_at'] != null
+          ? DateTime.parse(json['verified_at'])
           : null,
     );
   }

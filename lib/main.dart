@@ -17,7 +17,6 @@ void main() async {
   } catch (e) {
     print('Failed to initialize Firebase: $e');
   }
-
   SystemChrome.setSystemUIOverlayStyle(
     SystemUiOverlayStyle.dark.copyWith(
       statusBarColor: Colors.transparent,

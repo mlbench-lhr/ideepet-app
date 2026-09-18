@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:idee_pet/app/app.dart';
+import 'package:idee_pet/app/routes/biometric_routes.dart';
 
 class HomeController extends GetxController {
   final AuthService _authService;
@@ -105,6 +106,11 @@ class HomeController extends GetxController {
 
   void goToEditSize() {
     _navigationService.toNamed(EditPetRoutes.editSize,
+        arguments: appStateService.pet());
+  }
+
+  void goToBiometricScanning() {
+    _navigationService.toNamed(BiometricRoutes.scanning,
         arguments: appStateService.pet());
   }
 
