@@ -2,7 +2,7 @@ name: idee_pet
 description: "A new Flutter project."
 publish_to: "none"
 
-version: 100.1.0+100010
+version: 100.1.0+100012
 
 environment:
   sdk: ^3.6.1
