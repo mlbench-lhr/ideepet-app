@@ -288,7 +288,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Alamofire: bd5e7b23a1a750975288482c1831d71e74415f86
   audioplayers_darwin: 4f9ca89d92d3d21cec7ec580e78ca888e5fb68bd
-  camera_avfoundation: be3be85408cd4126f250386828e9b1dfa40ab436
+  camera_avfoundation: 5675ca25298b6f81fa0a325188e7df62cc217741
   easy_image_cropper: 0d6f854e79af9c42b472ae2f6383ba0c81befe1a
   Firebase: d99ac19b909cd2c548339c2241ecd0d1599ab02e
   firebase_analytics: 0e25ca1d4001ccedd40b4e5b74c0ec34e18f6425
@@ -328,6 +328,6 @@ SPEC CHECKSUMS:
   video_player_avfoundation: 3453f792138786248960ca029747fcd9f318ef52
   Yams: e10dae147f517ed57ecae37c5e8681bdf8fcab65
 
-PODFILE CHECKSUM: 7e4ebf11f2f0a255776b4a19883da4bd6216202b
+PODFILE CHECKSUM: d376cd454984c2dc481b0b1c86086d9bc136af50
 
 COCOAPODS: 1.17.0

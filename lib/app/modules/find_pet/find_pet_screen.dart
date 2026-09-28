@@ -139,7 +139,12 @@ class _PetFindScanningState extends State<PetFindScanning>
 
     if (!mounted) return;
 
-    if (result == null) return;
+    if (result == null) {
+      // Detection failed — restore the live camera feed so the user can
+      // record and retry instead of seeing a blank/white video preview.
+      await _retryRecording();
+      return;
+    }
 
     Get.find<NavigationService>().toNamed(
       FindPetResultRoutes.findPetResult,
