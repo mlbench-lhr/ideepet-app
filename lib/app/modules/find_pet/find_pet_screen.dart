@@ -28,6 +28,9 @@ class _PetFindScanningState extends State<PetFindScanning>
     with WidgetsBindingObserver {
   CameraController? _cameraController;
   final _findPetResultRepository = FindPetResultRepository();
+
+  /// "dog" or "cat", chosen in the pet type dialog before this screen.
+  final String? _petType = (Get.arguments as Map?)?['pet'] as String?;
   bool _isIdentifying = false;
 
   @override
@@ -162,7 +165,10 @@ class _PetFindScanningState extends State<PetFindScanning>
     setState(() => _isIdentifying = true);
 
     try {
-      final response = await _findPetResultRepository.identifyPetByVideo(video);
+      final response = await _findPetResultRepository.identifyPetByVideo(
+        video,
+        pet: _petType,
+      );
 
       if (!response.success) {
         showError(

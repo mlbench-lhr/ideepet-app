@@ -71,6 +71,7 @@ class FindPetResultRepository extends BaseRepository {
   /// file straight from disk and enforces real send/receive timeouts.
   Future<BaseResponse<FindPetResult>> identifyPetByVideo(
     File video, {
+    String? pet,
     void Function(double progress)? onProgress,
   }) async {
     final token = await Get.find<TokenService>().getToken();
@@ -92,6 +93,7 @@ class FindPetResultRepository extends BaseRepository {
           video.path,
           filename: video.path.split('/').last,
         ),
+        if (pet != null) 'pet': pet,
       });
 
       final dioResponse = await client.post<dynamic>(

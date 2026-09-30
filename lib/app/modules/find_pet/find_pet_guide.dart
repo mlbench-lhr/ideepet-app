@@ -61,7 +61,11 @@ class FindPetGuide extends StatelessWidget {
                 'Entendi, começar',
                 style: TextStyle(color: AppColors.background, fontSize: 20),
               ),
-              action: () => Get.toNamed(FindPetRoutes.findPet),
+              action: () => Get.toNamed(
+                FindPetRoutes.findPet,
+                // Forward the pet type chosen in the dog/cat dialog.
+                arguments: Get.arguments,
+              ),
             ),
           ],
         ),
