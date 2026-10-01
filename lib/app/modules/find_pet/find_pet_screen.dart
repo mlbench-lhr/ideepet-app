@@ -170,20 +170,27 @@ class _PetFindScanningState extends State<PetFindScanning>
         pet: _petType,
       );
 
+      // Prefer the message sent by the backend; the hardcoded texts are
+      // only a fallback when the response carries none.
+      final backendMessage = response.errorMessages.isNotEmpty
+          ? response.errorMessages.first.toString()
+          : response.result?.message;
+
       if (!response.success) {
-        showError(
-          message: response.errorMessages.isNotEmpty
-              ? response.errorMessages.first.toString()
-              : 'Erro ao identificar o pet.',
-        );
+        showError(message: backendMessage ?? 'Erro ao identificar o pet.');
         return null;
       }
 
       final result = response.result;
       if (result != null && result.exists) {
-        showSuccess(message: 'Pet encontrado: ${result.petName ?? ''}');
+        showSuccess(
+          message: backendMessage ?? 'Pet encontrado: ${result.petName ?? ''}',
+        );
       } else {
-        showInfo(message: 'Nenhum pet correspondente foi encontrado.');
+        showInfo(
+          message:
+              backendMessage ?? 'Nenhum pet correspondente foi encontrado.',
+        );
       }
 
       return result;
