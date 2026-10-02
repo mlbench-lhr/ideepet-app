@@ -2,12 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:idee_pet/app/app.dart';
 import 'package:idee_pet/app/core/core_old/handler/handler.dart';
 import 'package:idee_pet/app/routes/biometric_routes.dart';
+import 'package:idee_pet/app/routes/capture_image_routes.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class BiometricController extends GetxController {
@@ -76,6 +77,73 @@ class BiometricController extends GetxController {
           : 'Não foi possível processar o vídeo.',
     );
     return false;
+  }
+
+  // --- Pet Profile Picture Logic ---
+  final petProfile = Rxn<File>();
+  final loadingPetProfile = false.obs;
+
+  Future<void> goToCaptureImage({
+    required void Function(String imagePath) onImageCaptured,
+  }) async {
+    await _navigationService.toNamed(
+      CaptureImageRoutes.captureImage,
+      arguments: {
+        'onImageCaptured': onImageCaptured,
+      },
+    );
+  }
+
+  Future<File?> pickImage(ImageSource source) async {
+    try {
+      final pickedFile =
+          await ImagePicker().pickImage(source: source, imageQuality: 80);
+      if (pickedFile != null) {
+        return File(pickedFile.path);
+      }
+    } catch (e) {
+      debugPrint('Erro ao selecionar imagem: $e');
+      showError(
+          message:
+              "Não foi possível acessar a ${source == ImageSource.camera ? 'câmera' : 'galeria'}. Verifique as permissões.");
+    }
+    return null;
+  }
+
+  void updatePetProfile(File? image) {
+    if (image != null) {
+      petProfile.value = image;
+    }
+  }
+
+  Future<void> sendPetProfile() async {
+    if (petProfile.value == null) {
+      showError(message: 'Selecione uma imagem de perfil.');
+      return;
+    }
+
+    loadingPetProfile(true);
+
+    try {
+      final response = await _biometricsRepository.sendPetProfile(
+        PetProfileRequest(
+          id: pet.id,
+          image: petProfile.value!,
+          onProgress: (_) {},
+        ),
+      );
+
+      if (response.success) {
+        _navigationService.toNamed(BiometricRoutes.guide, arguments: pet);
+      } else {
+        showError(message: 'Erro ao enviar a foto do pet');
+      }
+    } catch (e) {
+      debugPrint('Erro em sendPetProfile: $e');
+      showError(message: 'Ocorreu um erro ao enviar a foto.');
+    } finally {
+      loadingPetProfile(false);
+    }
   }
 
   void goToSuccessScreen() {

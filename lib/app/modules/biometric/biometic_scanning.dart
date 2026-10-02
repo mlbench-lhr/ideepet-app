@@ -290,7 +290,7 @@ class _BiometicScanningState extends State<BiometicScanning>
                         const CircularProgressIndicator(color: Colors.white),
                         const SizedBox(height: 16),
                         Text(
-                          'Enviando vídeo...',
+                          'Processando...',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
