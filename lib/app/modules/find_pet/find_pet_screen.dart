@@ -45,30 +45,69 @@ class _PetFindScanningState extends State<PetFindScanning>
     _initializeCamera();
   }
 
+  bool _isInitializingCamera = false;
+
   Future<void> _initializeCamera() async {
-    final cameras = await availableCameras();
+    // Lifecycle events can fire in quick succession (e.g. inactive → resumed
+    // when the screen wakes); avoid opening the camera twice.
+    if (_isInitializingCamera) return;
+    _isInitializingCamera = true;
 
-    if (cameras.isEmpty) {
-      if (mounted) {
-        showError(message: 'Nenhuma câmera disponível neste dispositivo.');
+    try {
+      final cameras = await availableCameras();
+
+      if (cameras.isEmpty) {
+        if (mounted) {
+          showError(message: 'Nenhuma câmera disponível neste dispositivo.');
+        }
+        return;
       }
-      return;
+
+      final cameraController = CameraController(
+        cameras.first,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+
+      try {
+        await cameraController.initialize();
+      } catch (e) {
+        debugPrint('Error initializing camera: $e');
+        await cameraController.dispose();
+        return;
+      }
+
+      // The app may have gone to background again while initializing.
+      final lifecycle = WidgetsBinding.instance.lifecycleState;
+      if (!mounted ||
+          (lifecycle != null && lifecycle != AppLifecycleState.resumed)) {
+        await cameraController.dispose();
+        return;
+      }
+
+      setState(() => _cameraController = cameraController);
+    } finally {
+      _isInitializingCamera = false;
+    }
+  }
+
+  /// Releases the camera so it isn't held while the app is in background.
+  /// Clears the reference *before* disposing so the preview never builds
+  /// with a disposed controller (which renders as a blank white screen).
+  Future<void> _releaseCamera() async {
+    final cameraController = _cameraController;
+    if (cameraController == null) return;
+
+    if (cameraController.value.isRecordingVideo) {
+      await _cancelVideoRecording();
     }
 
-    final cameraController = CameraController(
-      cameras.first,
-      ResolutionPreset.high,
-      enableAudio: false,
-    );
-
-    await cameraController.initialize();
-
-    if (!mounted) {
-      await cameraController.dispose();
-      return;
+    if (mounted) {
+      setState(() => _cameraController = null);
+    } else {
+      _cameraController = null;
     }
-
-    setState(() => _cameraController = cameraController);
+    await cameraController.dispose();
   }
 
   bool _isRecording = false;
@@ -221,24 +260,17 @@ class _PetFindScanningState extends State<PetFindScanning>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
-    final cameraController = _cameraController;
-    if (cameraController == null || !cameraController.value.isInitialized) {
-      return;
-    }
-
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
-      if (cameraController.value.isRecordingVideo) {
-        await _cancelVideoRecording();
-      }
-      await cameraController.dispose();
-      _cameraController = null;
       await _videoController?.pause();
+      await _releaseCamera();
     } else if (state == AppLifecycleState.resumed) {
+      // Note: the controller is null here (released on pause), so this must
+      // not bail out on a missing controller, or the camera never restarts.
       if (_recordedVideo == null) {
-        _initializeCamera();
+        if (_cameraController == null) await _initializeCamera();
       } else {
-        _videoController?.play();
+        await _videoController?.play();
       }
     }
   }
@@ -416,6 +448,19 @@ class _HoldToScanControlsState extends State<_HoldToScanControls>
           _finishRecording();
         }
       });
+  }
+
+  @override
+  void didUpdateWidget(covariant _HoldToScanControls oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Recording was stopped from outside (e.g. the app went to background):
+    // reset the progress ring so it doesn't keep animating.
+    // No setState needed: build() runs right after didUpdateWidget.
+    if (oldWidget.isCapturing && !widget.isCapturing && _isRecording) {
+      _isRecording = false;
+      _controller.stop();
+      _controller.reset();
+    }
   }
 
   void _startRecording() {
