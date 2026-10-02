@@ -348,7 +348,7 @@ class NewPetController extends GetxController {
       // _navigationService.offAllNamed(HomeRoutes.home, arguments: true);
       // _navigationService.offAllNamed(BiometricsRoutes.biometrics,
       //     arguments: response.result);
-      _navigationService.offAllNamed(BiometricRoutes.guide,
+      _navigationService.offAllNamed(BiometricRoutes.petImage,
           arguments: response.result);
       showSuccess(message: 'Pet criado com sucesso');
     } else {
